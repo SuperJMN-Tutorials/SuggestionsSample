@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reactive.Linq;
-using System.Windows.Input;
-using DynamicData;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
@@ -34,7 +32,7 @@ namespace SuggestionsSample.ViewModels
         private IObservable<IList<Suggestion>> GetSuggestions(Transaction transaction)
         {
             return Observable
-                .Range(0, Random.Shared.Next(1, 4))
+                .Range(0, Random.Shared.Next(1, 5))
                 .Select(index => new Suggestion(Random.Shared.Next() * transaction.Id + index))
                 .Delay(TimeSpan.FromSeconds(Random.Shared.Next(1, 3)))
                 .ToList();

@@ -12,14 +12,12 @@
 		<vm:MainWindowViewModel/>
 	</Design.DataContext>
 
-	<StackPanel>
-		<ListBox Items="{Binding Transactions}" SelectedItem="{Binding SelectedTransaction}" />
-		<Panel>
-			<ListBox Items="{Binding Suggestions}" />
-			<!--<Border IsVisible="{Binding CalculateSuggestions.IsExecuting}">
-				<TextBlock>Calculating suggestions</TextBlock>
-            </Border>-->
-		</Panel>
+	<StackPanel Spacing="10">
+        <TextBlock>Transactions</TextBlock>
+        <ListBox Items="{Binding Transactions}" SelectedItem="{Binding SelectedTransaction}" />
+        <Separator Height="2" Background="Gray" HorizontalAlignment="Stretch" />
+        <TextBlock>Suggestions</TextBlock>
+        <ListBox Items="{Binding Suggestions}" />
 	</StackPanel>
 
 </Window>
