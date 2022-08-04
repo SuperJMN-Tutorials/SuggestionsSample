@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
@@ -21,17 +23,25 @@ namespace SuggestionsSample.ViewModels
 
             suggestions = this.WhenAnyValue(x => x.SelectedTransaction)
                 .WhereNotNull()
-                .Select(GetSuggestions)
+                .Select(x => WithProgress(() => ConcurrentCount++, () => ConcurrentCount--, () => GetSuggestions(x)))                
                 .Switch()
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .ToProperty(this, x => x.Suggestions);
+
+            this.WhenAnyValue(x => x.ConcurrentCount).Select(x => x > 0).ToPropertyEx(this, model => model.IsBusy);
         }
+
+        [ObservableAsProperty]
+        public bool IsBusy { get; }
+
+        [Reactive]
+        public int ConcurrentCount { get; set; }
 
         public IList<Suggestion> Suggestions => suggestions.Value;
 
-        private IObservable<IList<Suggestion>> GetSuggestions(Transaction transaction)
+        private async Task<IList<Suggestion>> GetSuggestions(Transaction transaction)
         {
-            return Observable
+            return await Observable
                 .Range(0, Random.Shared.Next(1, 5))
                 .Select(index => new Suggestion(Random.Shared.Next(0, 1000) * transaction.Id + index))
                 .Delay(TimeSpan.FromSeconds(Random.Shared.Next(1, 3)))
@@ -42,6 +52,16 @@ namespace SuggestionsSample.ViewModels
 
         [Reactive]
         public Transaction SelectedTransaction { get; set; }
+
+        public static async Task<T> WithProgress<T>(Action addRef, Action release, Func<Task<T>> block) {
+            RxApp.MainThreadScheduler.Schedule(addRef);
+
+            try { 
+                return await block();
+            } finally {
+                RxApp.MainThreadScheduler.Schedule(release);
+            }
+        }
     }
 
     public class Suggestion

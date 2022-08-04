@@ -12,12 +12,21 @@
 		<vm:MainWindowViewModel/>
 	</Design.DataContext>
 
-	<StackPanel Spacing="10">
-        <TextBlock>Transactions</TextBlock>
-        <ListBox Items="{Binding Transactions}" SelectedItem="{Binding SelectedTransaction}" />
-        <Separator Height="2" Background="Gray" HorizontalAlignment="Stretch" />
-        <TextBlock>Suggestions</TextBlock>
-        <ListBox Items="{Binding Suggestions}" />
-	</StackPanel>
+	<Panel>
+		<StackPanel Spacing="10">
+			<TextBlock>Transactions</TextBlock>
+			<ListBox Items="{Binding Transactions}" SelectedItem="{Binding SelectedTransaction}" />
+			<Separator Height="2" Background="Gray" HorizontalAlignment="Stretch" />
+			<Panel>
+				<StackPanel>
+					<TextBlock>Suggestions</TextBlock>
+					<ListBox Items="{Binding Suggestions}" />
+				</StackPanel>
+			</Panel>
+		</StackPanel>
+        <Border VerticalAlignment="Bottom" IsVisible="{Binding IsBusy}" Background="White">
+            <TextBlock>Processing...</TextBlock>
+        </Border>
+	</Panel>
 
 </Window>
