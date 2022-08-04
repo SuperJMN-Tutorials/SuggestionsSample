@@ -33,7 +33,7 @@ namespace SuggestionsSample.ViewModels
         {
             return Observable
                 .Range(0, Random.Shared.Next(1, 5))
-                .Select(index => new Suggestion(Random.Shared.Next() * transaction.Id + index))
+                .Select(index => new Suggestion(Random.Shared.Next(0, 1000) * transaction.Id + index))
                 .Delay(TimeSpan.FromSeconds(Random.Shared.Next(1, 3)))
                 .ToList();
         }
