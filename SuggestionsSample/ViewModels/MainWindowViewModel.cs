@@ -6,91 +6,61 @@ using System.Threading.Tasks;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
-namespace SuggestionsSample.ViewModels
+namespace SuggestionsSample.ViewModels;
+
+public class MainWindowViewModel : ViewModelBase
 {
-    public class MainWindowViewModel : ViewModelBase
+    private readonly ObservableAsPropertyHelper<IList<Suggestion>> suggestions;
+
+    public MainWindowViewModel()
     {
-        private readonly ObservableAsPropertyHelper<IList<Suggestion>> suggestions;
-
-        public MainWindowViewModel()
+        Transactions = new[]
         {
-            Transactions = new[]
-            {
-                new Transaction(1),
-                new Transaction(2),
-                new Transaction(3),
-            };
+            new Transaction(1),
+            new Transaction(2),
+            new Transaction(3)
+        };
 
-            suggestions = this.WhenAnyValue(x => x.SelectedTransaction)
-                .WhereNotNull()
-                .Select(x => WithProgress(() => ConcurrentCount++, () => ConcurrentCount--, () => GetSuggestions(x)))                
-                .Switch()
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .ToProperty(this, x => x.Suggestions);
+        suggestions = this.WhenAnyValue(x => x.SelectedTransaction)
+            .WhereNotNull()
+            .Select(x => WithProgress(() => ConcurrentCount++, () => ConcurrentCount--, () => GetSuggestions(x)))
+            .Switch()
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .ToProperty(this, x => x.Suggestions);
 
-            this.WhenAnyValue(x => x.ConcurrentCount).Select(x => x > 0).ToPropertyEx(this, model => model.IsBusy);
-        }
+        this.WhenAnyValue(x => x.ConcurrentCount).Select(x => x > 0).ToPropertyEx(this, model => model.IsBusy);
+    }
 
-        [ObservableAsProperty]
-        public bool IsBusy { get; }
+    [ObservableAsProperty] public bool IsBusy { get; }
 
-        [Reactive]
-        public int ConcurrentCount { get; set; }
+    [Reactive] public int ConcurrentCount { get; set; }
 
-        public IList<Suggestion> Suggestions => suggestions.Value;
+    public IList<Suggestion> Suggestions => suggestions.Value;
 
-        private async Task<IList<Suggestion>> GetSuggestions(Transaction transaction)
+    public Transaction[] Transactions { get; }
+
+    [Reactive] public Transaction SelectedTransaction { get; set; }
+
+    private static async Task<T> WithProgress<T>(Action addRef, Action release, Func<Task<T>> block)
+    {
+        RxApp.MainThreadScheduler.Schedule(addRef);
+
+        try
         {
-            return await Observable
-                .Range(0, Random.Shared.Next(1, 5))
-                .Select(index => new Suggestion(Random.Shared.Next(0, 1000) * transaction.Id + index))
-                .Delay(TimeSpan.FromSeconds(Random.Shared.Next(1, 3)))
-                .ToList();
+            return await block();
         }
-
-        public Transaction[] Transactions { get; }
-
-        [Reactive]
-        public Transaction SelectedTransaction { get; set; }
-
-        public static async Task<T> WithProgress<T>(Action addRef, Action release, Func<Task<T>> block) {
-            RxApp.MainThreadScheduler.Schedule(addRef);
-
-            try { 
-                return await block();
-            } finally {
-                RxApp.MainThreadScheduler.Schedule(release);
-            }
+        finally
+        {
+            RxApp.MainThreadScheduler.Schedule(release);
         }
     }
 
-    public class Suggestion
+    private static async Task<IList<Suggestion>> GetSuggestions(Transaction transaction)
     {
-        public int Id { get; }
-
-        public Suggestion(int id)
-        {
-            Id = id;
-        }
-
-        public override string ToString()
-        {
-            return $"Suggestion " + Id;
-        }
-    }
-
-    public class Transaction
-    {
-        public int Id { get; }
-
-        public Transaction(int id)
-        {
-            Id = id;
-        }
-
-        public override string ToString()
-        {
-            return $"Transaction " + Id;
-        }
+        return await Observable
+            .Range(0, Random.Shared.Next(1, 5))
+            .Select(index => new Suggestion(Random.Shared.Next(0, 1000) * transaction.Id + index))
+            .Delay(TimeSpan.FromSeconds(Random.Shared.Next(1, 3)), RxApp.MainThreadScheduler)
+            .ToList();
     }
 }
